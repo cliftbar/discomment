@@ -1,0 +1,18 @@
+import json
+
+from quart import render_template, Blueprint
+
+from config import env_vals
+from discord_utils import discord_client, DiscommentClient
+from dctypes import HTML, JSON
+
+jinja: Blueprint = Blueprint("jinja", __name__)
+
+
+@jinja.get("/")
+async def index() -> HTML:
+    msgs: list = [message
+                  async for message
+                  in discord_client.get_channel(env_vals["comment_channel_id"]).history(limit=200)]
+    contents: JSON = [json.dumps(DiscommentClient.msg_to_json(m)) for m in msgs]
+    return await render_template("html/home.html", msgs=contents)
