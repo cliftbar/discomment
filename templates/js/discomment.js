@@ -1,6 +1,7 @@
-const ws = new WebSocket("ws://127.0.0.1:5000/ws");
+const host = "{{ host }}"
+const ws = new WebSocket("ws://" + host + "/ws");
 
-    ws.addEventListener("message", function (event) {
+ws.addEventListener("message", function (event) {
     let d = JSON.parse(event.data);
     for (let i = 0; i < d.length; i++) {
         let m = d[i]
@@ -8,7 +9,7 @@ const ws = new WebSocket("ws://127.0.0.1:5000/ws");
         li.appendChild(document.createTextNode(JSON.stringify(m)));
         document.getElementById("messages").prepend(li);
     }
-    });
+});
 
 function send(event) {
     const message = (new FormData(event.target)).get("message");
@@ -21,7 +22,7 @@ function send(event) {
 
 function postComment() {
     let msg = document.getElementById("message").value
-    let url = "http://127.0.0.1:5000/api/msg"
+    let url = "http://" + host + "/api/msg"
 
     fetch(url, {
         method: "POST",
