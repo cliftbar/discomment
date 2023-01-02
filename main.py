@@ -26,6 +26,8 @@ from discord_utils import discord_client
 # - Auto create channel if missing
 # - Builtin keyword moderation (until discord works on bots)
 #   - https://www.reddit.com/r/myautomod/wiki/rules/#wiki_profanity.2Fhate_speech.2Finsults.2Fetc.
+# - api keys https://stackoverflow.com/questions/71260887/how-to-use-api-key-authentication-with-quart-api
+# - schemas/api docs https://github.com/pgjones/quart-schema,
 
 
 app: Quart = Quart("Discomment", template_folder="templates", static_folder="static")
