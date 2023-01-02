@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
 
-from config import env_vals
+from config import server_conf
 
-log_level: int = logging.getLevelName(str(env_vals.get("log_level", "INFO")).upper())
+log_level: int = logging.getLevelName(server_conf.log_level.upper())
 
 
 def log(msg: str, level: int = logging.INFO, source: str = None):
