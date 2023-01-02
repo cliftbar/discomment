@@ -8,7 +8,7 @@ class DCServerConfig:
     host: str = "127.0.0.1"
     port: int = 5000
     log_level: str = "debug"
-    msg_queue_max: int = 100
+    msg_queue_max: int = 1000
 
 
 @dataclass()

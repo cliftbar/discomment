@@ -6,7 +6,7 @@ from config import server_conf
 from dctypes import T
 
 
-def queue_get_many(q: Queue[T], max_items: int = server_conf.msg_queue_max) -> list[T]:
+def queue_get_many(q: Queue[T], max_items: int = 100) -> list[T]:
     items: list[T] = []
     for numOfItemsRetrieved in range(0, max_items):
         try:

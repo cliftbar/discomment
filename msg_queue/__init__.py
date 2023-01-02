@@ -1,3 +1,5 @@
 from queue import Queue
 
-msg_queue: Queue = Queue(maxsize=1000)
+from config import server_conf
+
+msg_queue: Queue = Queue(maxsize=server_conf.msg_queue_max)
