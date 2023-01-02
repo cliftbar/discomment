@@ -1,0 +1,8 @@
+typing-extensions
+quart
+pyyaml
+discord.py
+quart-openapi (bugged)
+quart-rate-limiter[redis]
+uvicorn
+quart-cors

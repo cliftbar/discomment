@@ -1,8 +1,11 @@
+import logging
 import re
 from queue import Queue
 from typing import Any
 
 from discord import Intents, Client
+
+from basic_log import log
 
 
 class DiscommentClient(Client):
@@ -27,13 +30,13 @@ class DiscommentClient(Client):
     def enqueue(self, msg):
         if self.msg_queue is None:
             return
-        print(msg)
+        log(msg, logging.DEBUG)
         self.msg_queue.put_nowait(msg)
 
     async def on_ready(self):
-        print(f'Logged on as {self.user}!')
+        log(f"Logged on as {self.user}!", logging.DEBUG)
 
     async def on_message(self, message):
-        print(f'Message from {message.author}: {message.content}')
+        log(f"Message from {message.author}: {message.content}", logging.INFO)
         self.enqueue(message)
 

@@ -1,5 +1,6 @@
 const host = "{{ host }}"
-const ws = new WebSocket("ws://" + host + "/ws");
+const port = "{{ port }}"
+const ws = new WebSocket("ws://" + host + ":" + port + "/ws");
 
 ws.addEventListener("message", function (event) {
     let d = JSON.parse(event.data);
@@ -22,7 +23,7 @@ function send(event) {
 
 function postComment() {
     let msg = document.getElementById("message").value
-    let url = "http://" + host + "/api/msg"
+    let url = "http://" + host + ":" + port + "/api/msg"
 
     fetch(url, {
         method: "POST",

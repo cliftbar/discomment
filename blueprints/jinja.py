@@ -20,6 +20,5 @@ async def index() -> HTML:
 
 @jinja.get("/js/<template_id>")
 async def get_js_template(template_id: str) -> Response:
-    host = env_vals["host"]
-    tmp: str = await render_template(f"js/{template_id}", host=host)
+    tmp: str = await render_template(f"js/{template_id}", host=env_vals["host"], port=env_vals["port"])
     return Response(tmp, mimetype='text/javascript')
