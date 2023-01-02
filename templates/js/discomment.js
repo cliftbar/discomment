@@ -8,12 +8,12 @@ ws.addEventListener("message", function (event) {
         let m = d[i]
         const li = document.createElement("li");
         li.appendChild(document.createTextNode(JSON.stringify(m)));
-        document.getElementById("messages").prepend(li);
+        document.getElementById("ul_messages").prepend(li);
     }
 });
 
 function send(event) {
-    const message = (new FormData(event.target)).get("message");
+    const message = (new FormData(event.target)).get("inpt_message");
     if (message) {
       ws.send(message);
     }
@@ -22,7 +22,7 @@ function send(event) {
 }
 
 function postComment() {
-    let msg = document.getElementById("message").value
+    let msg = document.getElementById("inpt_message").value
     let url = "http://" + host + ":" + port + "/api/msg"
 
     fetch(url, {
@@ -33,5 +33,21 @@ function postComment() {
           }
     }).then(res => {
         console.log(res)
+    })
+}
+
+function getComments() {
+    let url = "http://" + host + ":" + port + "/api/msg"
+
+    fetch(url, {
+        method: "GET",
+    }).then(r => r.json()).then(resJson => {
+        console.log(resJson)
+        let msgList = document.getElementById("ul_messages")
+        for (const msg of resJson) {
+            let li = document.createElement("li")
+            li.textContent = JSON.stringify(msg)
+            msgList.appendChild(li)
+        }
     })
 }

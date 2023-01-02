@@ -7,20 +7,16 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Discomment</title>
 </head>
-<body>
+<body onload="getComments()">
     <script src="js/discomment.js" ></script>
     <form action="javascript:void(0);">
         <label for="message">Chat Message</label>
-        <input type="text" id="message" minlength="1" />
+        <input type="text" id="inpt_message" minlength="1" />
         <button onclick="postComment(event)">Send</button>
     </form>
 
     <div style="display: flex; height: 100%; flex-direction: column">
-        <ul id="messages" style="flex-grow: 1; list-style-type: none">
-            {% for m in msgs %}
-                <li>{{ m | safe }}</li>
-            {% endfor %}
-        </ul>
+        <ul id="ul_messages" style="flex-grow: 1; list-style-type: none"></ul>
     </div>
 </body>
 </html>
