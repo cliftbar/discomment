@@ -24,6 +24,7 @@ from discord_utils import discord_client
 # - schemas/api docs https://github.com/pgjones/quart-schema,
 # - tests
 # - user data and account config can be the same object I think?? or nearly so?
+# TODO: discord/queue/event/websocket part needs to be re-architected
 
 
 app: Quart = Quart("Discomment", template_folder="templates", static_url_path="/", static_folder="static")

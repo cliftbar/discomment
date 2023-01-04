@@ -2,7 +2,7 @@ const host = "{{ host }}"
 const port = "{{ port }}"
 const apikey = "{{ apikey }}"
 const channelId = "{{ channelId }}"
-const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=" + apikey + "&channelId=" + channelId);
+const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=" + apikey + "&channelId=" + channelId.toString());
 
 ws.addEventListener("message", function (event) {
     let d = JSON.parse(event.data);
@@ -25,11 +25,11 @@ function send(event) {
 
 function postComment() {
     let msg = document.getElementById("inpt_message").value
-    let url = "http://" + host + ":" + port + "/api/msg?channelId=" + channelId
+    let url = "http://" + host + ":" + port + "/api/msg"
 
     fetch(url, {
         method: "POST",
-        body: JSON.stringify({"message": msg}),
+        body: JSON.stringify({"message": msg, "channelId": channelId}),
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + apikey
@@ -40,7 +40,7 @@ function postComment() {
 }
 
 function getComments() {
-    let url = "http://" + host + ":" + port + "/api/msg?channelId=" + channelId
+    let url = "http://" + host + ":" + port + "/api/msg?channelId=" + channelId.toString()
 
     fetch(url, {
         method: "GET",

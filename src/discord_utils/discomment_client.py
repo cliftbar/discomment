@@ -1,17 +1,17 @@
 import logging
 import re
-from queue import Queue
 from typing import Any
 
-from discord import Intents, Client
+from discord import Intents, Client, Message
 
 from basic_log import log
+from msg_queue import ChannelQueueManager
 
 
 class DiscommentClient(Client):
-    def __init__(self, *, intents: Intents, msg_queue: Queue = None, **options: Any):
+    def __init__(self, *, intents: Intents, msg_manager: ChannelQueueManager = None, **options: Any):
         super().__init__(intents=intents, **options)
-        self.msg_queue = msg_queue
+        self.msg_manager: ChannelQueueManager = msg_manager
 
     @staticmethod
     def msg_to_json(msg) -> dict:
@@ -27,11 +27,11 @@ class DiscommentClient(Client):
         return {"content": content_body, "author": author, "created_at": msg.created_at.isoformat(),
                 "reactions": [{"emoji": r.emoji, "count": r.count} for r in msg.reactions]}
 
-    def enqueue(self, msg):
-        if self.msg_queue is None:
+    def enqueue(self, msg: Message):
+        if self.msg_manager is None:
             return
-        log(msg, logging.DEBUG)
-        self.msg_queue.put_nowait(msg)
+        log(str(msg), logging.DEBUG)
+        self.msg_manager.push(msg.channel.id, msg)
 
     async def on_ready(self):
         log(f"Logged on as {self.user}!", logging.DEBUG)

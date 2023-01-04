@@ -1,5 +1,3 @@
-from queue import Queue
+from msg_queue.utils import ChannelQueueManager
 
-from config import server_conf
-
-msg_queue: Queue = Queue(maxsize=server_conf.msg_queue_max)
+channel_msg_manager: ChannelQueueManager = ChannelQueueManager()

@@ -24,13 +24,14 @@ async def send_msg() -> JSON:
     user: UserModel = g.get("user")
     json_data: dict = await request.get_json()
     msg: str = json_data['message']
+    channel_id: int = int(json_data["channelId"])
 
     if user.user_data.moderation:
         if validate_msg(msg):
             raise ModerationApplied()
 
     msg = f"Author: {uuid.uuid4()}\n{msg}"
-    ret: Message = await discord_client.get_channel(account_conf.comment_channel_id).send(msg)
+    ret: Message = await discord_client.get_channel(channel_id).send(msg)
     return DiscommentClient.msg_to_json(ret)
 
 
@@ -47,8 +48,8 @@ async def get_messages() -> JSON:
                           if user.user_data.history_limit is not None
                           else account_conf.history_limit)
 
-    msgs: list = [message async
-                  for message
+    msgs: list = [message
+                  async for message
                   in discord_client.get_channel(channel_id)
                   .history(limit=history_limit, before=as_of)]
 
