@@ -2,10 +2,11 @@ import logging
 from queue import Empty, Queue
 
 from basic_log import log
+from config import server_conf
 from dctypes import T
 
 
-def queue_get_many(q: Queue[T], max_items: int = 100) -> list[T]:
+def queue_get_many(q: Queue[T], max_items: int = server_conf.msg_queue_fetch_limit) -> list[T]:
     items: list[T] = []
     for numOfItemsRetrieved in range(0, max_items):
         try:

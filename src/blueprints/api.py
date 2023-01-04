@@ -13,7 +13,7 @@ from config import account_conf
 from dctypes import JSON
 from decorators import apikey_required
 from discord_utils import discord_client, DiscommentClient
-from discord_utils.moderation import linear_moderation
+from discord_utils.moderation import validate_msg
 from sqlite import GenericQuery
 
 api: Blueprint = Blueprint("api", __name__)
@@ -27,7 +27,7 @@ async def send_msg() -> JSON:
     msg: str = json_data['message']
 
     if user.user_data.moderation:
-        if linear_moderation(msg):
+        if validate_msg(msg):
             raise BadRequest("Moderation Applied")
 
     msg = f"Author: {uuid.uuid4()}\n{msg}"
