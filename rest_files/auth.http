@@ -1,0 +1,3 @@
+###
+GET http://{{host}}:{{port}}/api/auth/test?apikey=localhost
+Accept: application/json

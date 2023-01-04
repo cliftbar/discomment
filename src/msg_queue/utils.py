@@ -2,7 +2,6 @@ import logging
 from queue import Empty, Queue
 
 from basic_log import log
-from config import server_conf
 from dctypes import T
 
 

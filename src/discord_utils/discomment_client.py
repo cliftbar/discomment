@@ -39,4 +39,3 @@ class DiscommentClient(Client):
     async def on_message(self, message):
         log(f"Message from {message.author}: {message.content}", logging.INFO)
         self.enqueue(message)
-

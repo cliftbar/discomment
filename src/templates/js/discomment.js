@@ -15,7 +15,7 @@ ws.addEventListener("message", function (event) {
 function send(event) {
     const message = (new FormData(event.target)).get("inpt_message");
     if (message) {
-      ws.send(message);
+        ws.send(message);
     }
     event.target.reset();
     return false;
@@ -30,7 +30,7 @@ function postComment() {
         body: JSON.stringify({"message": msg}),
         headers: {
             "Content-Type": "application/json"
-          }
+        }
     }).then(res => {
         console.log(res)
     })

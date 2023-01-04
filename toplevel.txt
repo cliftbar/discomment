@@ -6,3 +6,6 @@ quart-openapi (bugged)
 quart-rate-limiter[redis]
 uvicorn
 quart-cors
+sqlalchemy
+passlib
+argon2_cffi

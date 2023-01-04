@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class DCServerConfig:
     bot_token: str
+    apikey_salt: str
 
     host: str = "127.0.0.1"
     port: int = 5000
