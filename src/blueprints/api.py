@@ -32,12 +32,13 @@ async def get_messages() -> JSON:
     return contents
 
 
-@api.route("/api/auth/test")
-async def sqltest() -> JSON:
+@api.route("/api/auth/apikey/verify")
+async def verify_apikey() -> JSON:
     apikey: str = request.args.get("apikey")
+    namespace: str = request.args.get("ns")
 
     auth_table: Table = auth_store.get_table(APIKeyModel.tablename())
-    query: GenericQuery = APIKeyModel.fetch_key(auth_table, "localhost", "hash")
+    query: GenericQuery = APIKeyModel.fetch_key(auth_table, namespace, "hash")
     ps_hash: str = auth_store.fetch_first_entity(query)
 
     return {"result": verify_hash(apikey, ps_hash)}
