@@ -11,4 +11,4 @@ Content-Type: application/json
 # Verify an api key
 GET http://{{host}}:{{port}}/api/auth/apikey/verify?ns=test
 Accept: application/json
-Authorization: Bearer dsc.6b967535-6f81-460f-9859-caa47740ce87
+Authorization: Bearer {{apikey}}

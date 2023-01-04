@@ -6,3 +6,5 @@
 .idea
 *.pyc
 *.sqlite
+
+*.private.env.json

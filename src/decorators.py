@@ -43,7 +43,7 @@ def apikey_required() -> Callable:
                 if (api_key_header is None or "Bearer " not in api_key_header) and api_key_arg is None:
                     raise Unauthorized("API Key not provided")
 
-                api_key: str = api_key_arg if api_key_arg is None else api_key_header.split(" ")[1]
+                api_key: str = api_key_arg if api_key_arg is not None else api_key_header.split(" ")[1]
 
             elif has_websocket_context():
                 ctx = websocket
