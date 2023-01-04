@@ -1,3 +1,10 @@
+POST http://{{host}}:{{port}}/api/auth/apikey/create
+Content-Type: application/json
+
+{
+  "namespace": "test"
+}
+
 ###
 GET http://{{host}}:{{port}}/api/auth/test?apikey=localhost
 Accept: application/json

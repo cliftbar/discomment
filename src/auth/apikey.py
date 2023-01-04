@@ -1,6 +1,8 @@
+import dataclasses
 import json
 from datetime import datetime
 
+from dataclasses import dataclass
 from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table
 from sqlalchemy.future import select
 from sqlalchemy.sql import FromClause
@@ -20,13 +22,10 @@ class APIKeyModel(BaseWithMigrations):
     @classmethod
     def migrations(cls) -> list[str]:
         # Write migrations here in order
-        migration_1_data: dict = {
-            "hash": create_hash("localhost", apikey=True),
-            "allowed_urls": ["localhost", "172.0.0.1"],
-        }
+        migration_1_data: APIKeyData = APIKeyData(create_hash("localhost", apikey=True), ["localhost", "172.0.0.1"])
 
         return [
-            f"INSERT INTO {cls.__tablename__} (apikey_id, kvs) VALUES ('localhost', json('{json.dumps(migration_1_data)}'))"
+            f"INSERT INTO {cls.__tablename__} (apikey_id, kvs) VALUES ('localhost', json('{json.dumps(dataclasses.asdict(migration_1_data))}'))"
         ]
 
     def to_json(self) -> dict:
@@ -47,3 +46,9 @@ class APIKeyModel(BaseWithMigrations):
         for p in path:
             selector = table.c.kvs[p]
         return select(selector).where(table.c.apikey_id == namespace)
+
+
+@dataclass
+class APIKeyData:
+    hash: str
+    allowed_hosts: list[str]

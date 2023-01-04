@@ -1,3 +1,4 @@
+import dataclasses
 import uuid
 
 from discord import Message
@@ -5,7 +6,8 @@ from quart import Blueprint, request
 from sqlalchemy import Table
 
 from auth import auth_store, APIKeyModel
-from auth.authutils import verify_hash
+from auth.apikey import APIKeyData
+from auth.authutils import verify_hash, create_hash
 from config import account_conf
 from dctypes import JSON
 from discord_utils import discord_client, DiscommentClient
@@ -39,3 +41,22 @@ async def sqltest() -> JSON:
     ps_hash: str = auth_store.fetch_first_entity(query)
 
     return {"result": verify_hash(apikey, ps_hash)}
+
+
+@api.route("/api/auth/apikey/create", methods=["POST"])
+async def create_apikey() -> JSON:
+    js: JSON = await request.get_json()
+
+    namespace: str = js["namespace"]
+    allowed_hosts: list[str] = js.get("allowedHosts", ["*"])
+
+    new_apikey: str = f"dsc.{uuid.uuid4()}"
+    hashed_apikey: str = create_hash(new_apikey, apikey=True)
+
+    data: APIKeyData = APIKeyData(hashed_apikey, allowed_hosts)
+
+    entry: APIKeyModel = APIKeyModel(apikey_id=namespace, kvs=dataclasses.asdict(data))
+
+    auth_store.store_row(entry)
+
+    return {"apikey": new_apikey}
