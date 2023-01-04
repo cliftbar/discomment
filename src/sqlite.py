@@ -47,11 +47,11 @@ class SqliteStore:
         self.metadata.create_all(self.engine)
         self.tables: dict[str, Table] = {}
 
-        self.session: Session = Session(self.engine)
-        with self.session.begin() as tx:
+        session: Session = Session(self.engine)
+        with session.begin() as tx:
             for model in models:
                 for migration in model.migrations():
-                    self.ddl_statement(self.session, migration)
+                    self.ddl_statement(session, migration)
                 self.tables[model.tablename()] = Table(model.tablename(), self.metadata, autoload=True)
             log(f"{db_filename} migrations done", logging.INFO)
             tx.commit()
@@ -73,16 +73,16 @@ class SqliteStore:
         return self.store_rows([row])
 
     def store_rows(self, rows: list[Base]):
-        session: Session = self.session
+        session: Session = Session(self.engine)
         with session.begin():
             session.add_all(rows)
 
     def fetch_entities(self, stmt: GenericQuery[M]) -> list[M]:
-        res: list[M] = self.session.execute(statement=stmt).scalars().all()
+        res: list[M] = Session(self.engine).execute(statement=stmt).scalars().all()
         return res
 
     def fetch_first_entity(self, stmt: GenericQuery[M]) -> M:
-        res: M = self.session.execute(statement=stmt).scalars().first()
+        res: M = Session(self.engine).execute(statement=stmt).scalars().first()
         return res
 
     def get_table(self, tablename: str) -> Table:

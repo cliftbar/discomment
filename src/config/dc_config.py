@@ -12,7 +12,7 @@ class DCServerConfig:
     msg_queue_max: int = 1000
 
 
-@dataclass()
+@dataclass
 class DCAccountConfig:
     comment_channel_id: int
 

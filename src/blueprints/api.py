@@ -2,25 +2,35 @@ import dataclasses
 import uuid
 
 from discord import Message
-from quart import Blueprint, request
+from quart import Blueprint, request, g
 from sqlalchemy import Table
+from werkzeug.exceptions import BadRequest
 
-from auth import auth_store, APIKeyModel
-from auth.apikey import APIKeyData
+from auth import auth_store, UserModel
 from auth.authutils import verify_hash, create_hash
+from auth.user import UserData
 from config import account_conf
 from dctypes import JSON
 from decorators import apikey_required
 from discord_utils import discord_client, DiscommentClient
+from discord_utils.moderation import linear_moderation
 from sqlite import GenericQuery
 
 api: Blueprint = Blueprint("api", __name__)
 
 
 @api.route("/api/msg", methods=["POST"])
+@apikey_required()
 async def send_msg() -> JSON:
+    user: UserModel = g.get("user")
     json_data: dict = await request.get_json()
-    msg = f"Author: {uuid.uuid4()}\n{json_data['message']}"
+    msg: str = json_data['message']
+
+    if user.user_data.moderation:
+        if linear_moderation(msg):
+            raise BadRequest("Moderation Applied")
+
+    msg = f"Author: {uuid.uuid4()}\n{msg}"
     ret: Message = await discord_client.get_channel(account_conf.comment_channel_id).send(msg)
     return DiscommentClient.msg_to_json(ret)
 
@@ -39,8 +49,8 @@ async def verify_apikey() -> JSON:
     apikey: str = request.headers.get("Authorization").split(" ")[1]
     namespace: str = request.args.get("ns")
 
-    auth_table: Table = auth_store.get_table(APIKeyModel.tablename())
-    query: GenericQuery = APIKeyModel.fetch_key_ns(auth_table, namespace, "hash")
+    auth_table: Table = auth_store.get_table(UserModel.tablename())
+    query: GenericQuery = UserModel.fetch_key_ns(auth_table, namespace, "hash")
     ps_hash: str = auth_store.fetch_first_entity(query)
 
     return {"result": verify_hash(apikey, ps_hash)}
@@ -56,9 +66,9 @@ async def create_apikey() -> JSON:
     new_apikey: str = f"dsc.{uuid.uuid4()}"
     hashed_apikey: str = create_hash(new_apikey, apikey=True)
 
-    data: APIKeyData = APIKeyData(hashed_apikey, allowed_hosts)
+    data: UserData = UserData(hashed_apikey, allowed_hosts)
 
-    entry: APIKeyModel = APIKeyModel(apikey_id=namespace, kvs=dataclasses.asdict(data))
+    entry: UserModel = UserModel(apikey_id=namespace, kvs=dataclasses.asdict(data))
 
     auth_store.store_row(entry)
 

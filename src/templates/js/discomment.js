@@ -29,7 +29,8 @@ function postComment() {
         method: "POST",
         body: JSON.stringify({"message": msg}),
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": "Bearer localhost"
         }
     }).then(res => {
         console.log(res)

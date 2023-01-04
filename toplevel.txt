@@ -9,3 +9,4 @@ quart-cors
 sqlalchemy
 passlib
 argon2_cffi
+alt-profanity-check

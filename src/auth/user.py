@@ -12,18 +12,22 @@ from auth.authutils import create_hash
 from sqlite import BaseWithMigrations, GenericQuery
 
 
-class APIKeyModel(BaseWithMigrations):
-    __tablename__ = "apikey"
+class UserModel(BaseWithMigrations):
+    __tablename__ = "users"
 
     apikey_id: str = Column(TEXT, primary_key=True, nullable=False)
-    created_at: datetime = Column(DATETIME, nullable=False, server_default=func.utcnow())
+    created_at: datetime = Column(DATETIME, nullable=False, server_default=func.now())
 
     kvs: dict = Column(JSON, nullable=False)
+
+    @property
+    def user_data(self):
+        return UserData(**self.kvs)
 
     @classmethod
     def migrations(cls) -> list[str]:
         # Write migrations here in order
-        migration_1_data: APIKeyData = APIKeyData(create_hash("localhost", apikey=True), ["localhost", "127.0.0.1"])
+        migration_1_data: UserData = UserData(create_hash("localhost", apikey=True), ["localhost", "127.0.0.1"], moderation=True)
 
         return [
             f"INSERT INTO {cls.__tablename__} (apikey_id, kvs) VALUES ('localhost', json('{json.dumps(dataclasses.asdict(migration_1_data))}'))"
@@ -37,11 +41,11 @@ class APIKeyModel(BaseWithMigrations):
         }
 
     @staticmethod
-    def fetch_key_ns(table: Table, namespace: str, key: str) -> GenericQuery["APIKeyModel"]:
-        return APIKeyModel.fetch_path_ns(table, namespace, [key])
+    def fetch_key_ns(table: Table, namespace: str, key: str) -> GenericQuery["UserModel"]:
+        return UserModel.fetch_path_ns(table, namespace, [key])
 
     @staticmethod
-    def fetch_path_ns(table: Table, namespace: str, path: list[str]) -> GenericQuery["APIKeyModel"]:
+    def fetch_path_ns(table: Table, namespace: str, path: list[str]) -> GenericQuery["UserModel"]:
         selector: FromClause = table.c.kvs
 
         for p in path:
@@ -49,13 +53,14 @@ class APIKeyModel(BaseWithMigrations):
         return select(selector).where(table.c.apikey_id == namespace)
 
     @staticmethod
-    def fetch_by_hash(table: Table, pw_hash: str) -> GenericQuery["APIKeyModel"]:
+    def fetch_by_hash(table: Table, pw_hash: str) -> GenericQuery["UserModel"]:
         json_part = func.json_each(table.c["kvs"]).table_valued('value', joins_implicitly=True)
-        query: Query = select(APIKeyModel).where(json_part.c.value == pw_hash)
+        query: Query = select(UserModel).where(json_part.c.value == pw_hash)
         return query
 
 
 @dataclass
-class APIKeyData:
+class UserData:
     hash: str
     allowed_hosts: list[str]
+    moderation: bool = False

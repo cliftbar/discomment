@@ -2,12 +2,12 @@
 from functools import wraps
 from typing import Callable, Any
 
-from quart import has_request_context, has_websocket_context, request, websocket, current_app
+from quart import has_request_context, has_websocket_context, request, websocket, current_app, g
 from sqlalchemy import Table
 from werkzeug.exceptions import Unauthorized
 
-from auth import auth_store, APIKeyModel
-from auth.apikey import APIKeyData
+from auth import auth_store, UserModel
+from auth.user import UserData
 from auth.authutils import create_hash, verify_hash, verify_hosts
 from sqlite import GenericQuery
 
@@ -38,38 +38,32 @@ def apikey_required() -> Callable:
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             if has_request_context():
                 ctx = request
-                api_key_header: str = request.headers.get("Authorization")
-                api_key_arg: str = request.args.get("auth")
-                if (api_key_header is None or "Bearer " not in api_key_header) and api_key_arg is None:
-                    raise Unauthorized("API Key not provided")
-
-                api_key: str = api_key_arg if api_key_arg is not None else api_key_header.split(" ")[1]
 
             elif has_websocket_context():
                 ctx = websocket
-                api_key_header: str = websocket.headers.get("Authorization")
-                api_key_arg: str = websocket.args.get("auth")
-                if (api_key_header is None or "Bearer " not in api_key_header) and api_key_arg is None:
-                    raise Unauthorized("API Key not provided")
-
-                api_key: str = api_key_arg if api_key_arg is not None else api_key_header.split(" ")[1]
             else:
                 raise RuntimeError("Not used in a valid request/websocket context")
+            api_key_header: str = ctx.headers.get("Authorization")
+            api_key_arg: str = ctx.args.get("auth")
+            if (api_key_header is None or "Bearer " not in api_key_header) and api_key_arg is None:
+                raise Unauthorized("API Key not provided")
+
+            api_key: str = api_key_arg if api_key_arg is not None else api_key_header.split(" ")[1]
 
             hashed: str = create_hash(api_key, apikey=True)
 
-            auth_table: Table = auth_store.get_table(APIKeyModel.tablename())
-            query: GenericQuery = APIKeyModel.fetch_by_hash(auth_table, hashed)
-            record: APIKeyModel = auth_store.fetch_first_entity(query)
+            auth_table: Table = auth_store.get_table(UserModel.tablename())
+            query: GenericQuery = UserModel.fetch_by_hash(auth_table, hashed)
+            record: UserModel = auth_store.fetch_first_entity(query)
 
             if record is None:
                 raise Unauthorized("API Key not recognized")
 
-            record_data: APIKeyData = APIKeyData(**record.kvs)
+            g.user = record
 
-            if not verify_hash(api_key, record_data.hash):
+            if not verify_hash(api_key, record.user_data.hash):
                 raise Unauthorized("API Key not verified")
-            if not verify_hosts(ctx.remote_addr, record_data.allowed_hosts):
+            if not verify_hosts(ctx.remote_addr, record.user_data.allowed_hosts):
                 raise Unauthorized("Client Host not allowed")
 
             return await current_app.ensure_async(func)(*args, **kwargs)
