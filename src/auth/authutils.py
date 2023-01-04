@@ -1,3 +1,5 @@
+from enum import Enum
+
 from passlib.handlers.argon2 import argon2
 
 from config import server_conf
@@ -14,3 +16,18 @@ def verify_hash(secret: str, pw_hash: str) -> bool:
 
 def verify_hosts(remote_host: str, host_list: list[str]) -> bool:
     return "*" in host_list or remote_host in host_list
+
+
+class Scopes(str, Enum):
+    ADMIN = "admin"
+    ACCOUNT_READ = "account_read"
+    ACCOUNT_WRITE = "account_write"
+
+
+def verify_scopes(user_scopes: list[str], allowed_scopes: list[Scopes]) -> bool:
+    if allowed_scopes is None:
+        return False
+    for s in allowed_scopes:
+        if s.value in user_scopes:
+            return True
+    return False

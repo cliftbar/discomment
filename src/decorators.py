@@ -4,15 +4,14 @@ from typing import Callable, Any
 
 from quart import has_request_context, has_websocket_context, request, websocket, current_app, g
 from sqlalchemy import Table
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import Unauthorized, Forbidden
 
 from auth import auth_store, UserModel
-from auth.user import UserData
-from auth.authutils import create_hash, verify_hash, verify_hosts
+from auth.authutils import create_hash, verify_hash, verify_hosts, verify_scopes, Scopes
 from sqlite import GenericQuery
 
 
-def apikey_required() -> Callable:
+def apikey_required(scopes: list[Scopes] = None) -> Callable:
     """A decorator to restrict route access to requests with an API key.
 
     This should be used to wrap a route handler (or view function) to
@@ -62,9 +61,11 @@ def apikey_required() -> Callable:
             g.user = record
 
             if not verify_hash(api_key, record.user_data.hash):
-                raise Unauthorized("API Key not verified")
+                raise Forbidden("API Key not verified")
             if not verify_hosts(ctx.remote_addr, record.user_data.allowed_hosts):
-                raise Unauthorized("Client Host not allowed")
+                raise Forbidden("Client Host not allowed")
+            if not verify_scopes(record.user_data.scopes, scopes):
+                raise Forbidden("API Key has insufficient permissions")
 
             return await current_app.ensure_async(func)(*args, **kwargs)
 

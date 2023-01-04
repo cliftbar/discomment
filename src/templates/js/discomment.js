@@ -1,6 +1,7 @@
 const host = "{{ host }}"
 const port = "{{ port }}"
-const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=localhost");
+const apikey = "{{ apikey }}"
+const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=" + apikey);
 
 ws.addEventListener("message", function (event) {
     let d = JSON.parse(event.data);
@@ -30,7 +31,7 @@ function postComment() {
         body: JSON.stringify({"message": msg}),
         headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer localhost"
+            "Authorization": "Bearer " + apikey
         }
     }).then(res => {
         console.log(res)
@@ -42,6 +43,9 @@ function getComments() {
 
     fetch(url, {
         method: "GET",
+        headers: {
+            "Authorization": "Bearer " + apikey
+        }
     }).then(r => r.json()).then(resJson => {
         console.log(resJson)
         let msgList = document.getElementById("ul_messages")

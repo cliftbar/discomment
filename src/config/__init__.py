@@ -1,9 +1,7 @@
-import yaml
+from pathlib import Path
 
-from config.dc_config import DCServerConfig, DCAccountConfig
+from config.dc_config import DCServerConfig, DCAccountConfig, init_config, DCConfig
 
-with open("env.yml") as env:
-    env_vals: dict = yaml.safe_load(env)
-
-    server_conf: DCServerConfig = DCServerConfig(**env_vals["server"])
-    account_conf: DCAccountConfig = DCAccountConfig(**env_vals["account"])
+conf: DCConfig = init_config(Path("env.yml"))
+server_conf: DCServerConfig = conf.server
+account_conf: DCAccountConfig = conf.account

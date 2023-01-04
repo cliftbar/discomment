@@ -39,8 +39,9 @@ async def before_serving():
 
 
 app.register_blueprint(api)
-app.register_blueprint(jinja)
 app.register_blueprint(ws)
+if server_conf.static_routes_enabled:
+    app.register_blueprint(jinja)
 
 
 def main():

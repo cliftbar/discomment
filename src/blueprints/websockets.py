@@ -4,6 +4,7 @@ from asyncio import sleep
 
 from quart import websocket, Blueprint
 
+from auth.authutils import Scopes
 from basic_log import log
 from config import account_conf
 from decorators import apikey_required
@@ -15,7 +16,7 @@ ws: Blueprint = Blueprint("ws", __name__)
 
 
 @ws.websocket("/ws/comments")
-@apikey_required()
+@apikey_required(scopes=[Scopes.ACCOUNT_READ])
 async def comment_socket():
     while True:
         log("ws alive", logging.DEBUG, __name__)

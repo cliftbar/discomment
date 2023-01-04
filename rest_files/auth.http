@@ -1,11 +1,16 @@
 ###
 # Create a new API key
 POST http://{{host}}:{{port}}/api/auth/apikey/create
+Authorization: Bearer {{apikey}}
 Content-Type: application/json
 
 {
   "namespace": "test",
-  "moderation": true
+  "moderation": true,
+  "allowedHosts": [
+    "*"
+  ],
+  "scopes": ["admin", "account_read", "account_write"]
 }
 
 ###

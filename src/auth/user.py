@@ -1,6 +1,6 @@
 import dataclasses
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table
@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import FromClause
 
-from auth.authutils import create_hash
+from auth.authutils import create_hash, Scopes
 from sqlite import BaseWithMigrations, GenericQuery
 
 
@@ -27,7 +27,12 @@ class UserModel(BaseWithMigrations):
     @classmethod
     def migrations(cls) -> list[str]:
         # Write migrations here in order
-        migration_1_data: UserData = UserData(create_hash("localhost", apikey=True), ["localhost", "127.0.0.1"], moderation=True)
+        migration_1_data: UserData = UserData(
+            create_hash("localhost", apikey=True),
+            ["localhost", "127.0.0.1"],
+            moderation=True,
+            scopes=[Scopes.ADMIN, Scopes.ACCOUNT_READ, Scopes.ACCOUNT_WRITE]
+        )
 
         return [
             f"INSERT INTO {cls.__tablename__} (apikey_id, kvs) VALUES ('localhost', json('{json.dumps(dataclasses.asdict(migration_1_data))}'))"
@@ -64,3 +69,4 @@ class UserData:
     hash: str
     allowed_hosts: list[str]
     moderation: bool = False
+    scopes: list[Scopes] = field(default_factory=list)
