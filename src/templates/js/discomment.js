@@ -1,6 +1,6 @@
 const host = "{{ host }}"
 const port = "{{ port }}"
-const ws = new WebSocket("ws://" + host + ":" + port + "/ws");
+const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=localhost");
 
 ws.addEventListener("message", function (event) {
     let d = JSON.parse(event.data);

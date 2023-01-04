@@ -23,7 +23,7 @@ class APIKeyModel(BaseWithMigrations):
     @classmethod
     def migrations(cls) -> list[str]:
         # Write migrations here in order
-        migration_1_data: APIKeyData = APIKeyData(create_hash("localhost", apikey=True), ["localhost", "172.0.0.1"])
+        migration_1_data: APIKeyData = APIKeyData(create_hash("localhost", apikey=True), ["localhost", "127.0.0.1"])
 
         return [
             f"INSERT INTO {cls.__tablename__} (apikey_id, kvs) VALUES ('localhost', json('{json.dumps(dataclasses.asdict(migration_1_data))}'))"

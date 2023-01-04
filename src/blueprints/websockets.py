@@ -6,6 +6,7 @@ from quart import websocket, Blueprint
 
 from basic_log import log
 from config import account_conf
+from decorators import apikey_required
 from discord_utils import DiscommentClient
 from msg_queue import msg_queue
 from msg_queue.utils import queue_get_many
@@ -13,7 +14,8 @@ from msg_queue.utils import queue_get_many
 ws: Blueprint = Blueprint("ws", __name__)
 
 
-@ws.websocket('/ws')
+@ws.websocket("/ws/comments")
+@apikey_required()
 async def comment_socket():
     while True:
         log("ws alive", logging.DEBUG, __name__)

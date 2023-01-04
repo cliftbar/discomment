@@ -37,9 +37,22 @@ def apikey_required() -> Callable:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             if has_request_context():
-                api_key: str = request.headers.get("Authorization").split(" ")[1]
+                ctx = request
+                api_key_header: str = request.headers.get("Authorization")
+                api_key_arg: str = request.args.get("auth")
+                if (api_key_header is None or "Bearer " not in api_key_header) and api_key_arg is None:
+                    raise Unauthorized("API Key not provided")
+
+                api_key: str = api_key_arg if api_key_arg is None else api_key_header.split(" ")[1]
+
             elif has_websocket_context():
-                api_key: str = websocket.headers.get("Authorization").split(" ")[1]
+                ctx = websocket
+                api_key_header: str = websocket.headers.get("Authorization")
+                api_key_arg: str = websocket.args.get("auth")
+                if (api_key_header is None or "Bearer " not in api_key_header) and api_key_arg is None:
+                    raise Unauthorized("API Key not provided")
+
+                api_key: str = api_key_arg if api_key_arg is not None else api_key_header.split(" ")[1]
             else:
                 raise RuntimeError("Not used in a valid request/websocket context")
 
@@ -50,13 +63,13 @@ def apikey_required() -> Callable:
             record: APIKeyModel = auth_store.fetch_first_entity(query)
 
             if record is None:
-                raise Unauthorized("API Key not found")
+                raise Unauthorized("API Key not recognized")
 
             record_data: APIKeyData = APIKeyData(**record.kvs)
 
             if not verify_hash(api_key, record_data.hash):
                 raise Unauthorized("API Key not verified")
-            if not verify_hosts(request.remote_addr, record_data.allowed_hosts):
+            if not verify_hosts(ctx.remote_addr, record_data.allowed_hosts):
                 raise Unauthorized("Client Host not allowed")
 
             return await current_app.ensure_async(func)(*args, **kwargs)

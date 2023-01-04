@@ -8,7 +8,7 @@ jinja: Blueprint = Blueprint("jinja", __name__, template_folder="templates")
 
 @jinja.get("/")
 async def index() -> HTML:
-    return await render_template("html/../templates/html/home.html")
+    return await render_template("html/home.html")
 
 
 @jinja.get("/js/<path:template_id>")
