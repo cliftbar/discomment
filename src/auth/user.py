@@ -9,6 +9,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import FromClause
 
 from auth.authutils import create_hash, Scopes
+from config import account_conf
 from sqlite import BaseWithMigrations, GenericQuery
 
 
@@ -30,8 +31,12 @@ class UserModel(BaseWithMigrations):
         migration_1_data: UserData = UserData(
             create_hash("localhost", apikey=True),
             ["localhost", "127.0.0.1"],
-            moderation=True,
-            scopes=[Scopes.ADMIN, Scopes.ACCOUNT_READ, Scopes.ACCOUNT_WRITE]
+            moderation=account_conf.moderation_enabled,
+            scopes=[Scopes.ADMIN, Scopes.ACCOUNT_READ, Scopes.ACCOUNT_WRITE],
+            history_limit=account_conf.history_limit,
+            websocket_sleep_s=account_conf.websocket_sleep_s,
+            linear_moderation_threshold=account_conf.linear_moderation_threshold,
+            max_msg_length=account_conf.max_msg_length,
         )
 
         return [
@@ -70,3 +75,10 @@ class UserData:
     allowed_hosts: list[str]
     moderation: bool = False
     scopes: list[Scopes] = field(default_factory=list)
+
+    history_limit: int = account_conf.history_limit
+    websocket_sleep_s: float = account_conf.websocket_sleep_s
+
+    max_msg_length: int = account_conf.max_msg_length
+    linear_moderation_threshold: float = account_conf.linear_moderation_threshold
+    moderation_enabled: bool = account_conf.moderation_enabled

@@ -23,6 +23,7 @@ from discord_utils import discord_client
 # - add to a project, godin or pixelizor
 # - schemas/api docs https://github.com/pgjones/quart-schema,
 # - tests
+# - user data and account config can be the same object I think?? or nearly so?
 
 
 app: Quart = Quart("Discomment", template_folder="templates", static_url_path="/", static_folder="static")

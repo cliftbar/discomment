@@ -23,8 +23,8 @@ class DCServerConfig:
 class DCAccountConfig:
     comment_channel_id: int
 
-    history_count: int = 200
-    websocket_sleep_s: int = 2
+    history_limit: int = 200
+    websocket_sleep_s: float = 2
 
     max_msg_length: int = 1000
     linear_moderation_threshold: float = 0.4
