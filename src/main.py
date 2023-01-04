@@ -13,21 +13,16 @@ from blueprints.websockets import ws
 from config import server_conf
 from discord_utils import discord_client
 
-# https://pgjones.gitlab.io/quart/how_to_guides/websockets.html
-# https://quart.palletsprojects.com/en/latest/tutorials/chat_tutorial.html#chat-tutorial
-# https://pgjones.gitlab.io/quart/how_to_guides/request_body.html
 # TODO:
 # - package for deploy
 # - paid for real time/dedicated deployment/rates
-# - lambda based? probably not
-# - load messages by api (instead of jinja)
-# - cleaner embed js item
+# - cleaner embed js snippet
 # - Search server/channel by name
-# - Auto create channel if missing
-# - Builtin keyword moderation (until discord works on bots)
-#   - https://www.reddit.com/r/myautomod/wiki/rules/#wiki_profanity.2Fhate_speech.2Finsults.2Fetc.
-# - api keys https://stackoverflow.com/questions/71260887/how-to-use-api-key-authentication-with-quart-api
+# - Auto create a channel if one isn't set on websocket connection, requires a channel name/id param
+# - store account server id, and how to ensure channel is in server
+# - add to a project, godin or pixelizor
 # - schemas/api docs https://github.com/pgjones/quart-schema,
+# - tests
 
 
 app: Quart = Quart("Discomment", template_folder="templates", static_url_path="/", static_folder="static")
