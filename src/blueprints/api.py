@@ -10,6 +10,7 @@ from auth.apikey import APIKeyData
 from auth.authutils import verify_hash, create_hash
 from config import account_conf
 from dctypes import JSON
+from decorators import apikey_required
 from discord_utils import discord_client, DiscommentClient
 from sqlite import GenericQuery
 
@@ -33,12 +34,13 @@ async def get_messages() -> JSON:
 
 
 @api.route("/api/auth/apikey/verify")
+@apikey_required()
 async def verify_apikey() -> JSON:
-    apikey: str = request.args.get("apikey")
+    apikey: str = request.headers.get("Authorization").split(" ")[1]
     namespace: str = request.args.get("ns")
 
     auth_table: Table = auth_store.get_table(APIKeyModel.tablename())
-    query: GenericQuery = APIKeyModel.fetch_key(auth_table, namespace, "hash")
+    query: GenericQuery = APIKeyModel.fetch_key_ns(auth_table, namespace, "hash")
     ps_hash: str = auth_store.fetch_first_entity(query)
 
     return {"result": verify_hash(apikey, ps_hash)}

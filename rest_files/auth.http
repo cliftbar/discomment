@@ -1,3 +1,5 @@
+###
+# Create a new API key
 POST http://{{host}}:{{port}}/api/auth/apikey/create
 Content-Type: application/json
 
@@ -6,5 +8,7 @@ Content-Type: application/json
 }
 
 ###
-GET http://{{host}}:{{port}}/api/auth/apikey/verify?ns=test&apikey=dsc.6b967535-6f81-460f-9859-caa47740ce87
+# Verify an api key
+GET http://{{host}}:{{port}}/api/auth/apikey/verify?ns=test
 Accept: application/json
+Authorization: Bearer dsc.6b967535-6f81-460f-9859-caa47740ce87

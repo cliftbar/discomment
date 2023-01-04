@@ -10,3 +10,7 @@ def create_hash(secret: str, apikey: bool = False):
 
 def verify_hash(secret: str, pw_hash: str) -> bool:
     return argon2.verify(secret, pw_hash)
+
+
+def verify_hosts(remote_host: str, host_list: list[str]) -> bool:
+    return "*" in host_list or remote_host in host_list

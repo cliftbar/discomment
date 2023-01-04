@@ -1,10 +1,11 @@
 import dataclasses
 import json
+from dataclasses import dataclass
 from datetime import datetime
 
-from dataclasses import dataclass
 from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table
 from sqlalchemy.future import select
+from sqlalchemy.orm import Query
 from sqlalchemy.sql import FromClause
 
 from auth.authutils import create_hash
@@ -36,16 +37,22 @@ class APIKeyModel(BaseWithMigrations):
         }
 
     @staticmethod
-    def fetch_key(table: Table, namespace: str, key: str) -> GenericQuery["APIKeyModel"]:
-        return APIKeyModel.fetch_path(table, namespace, [key])
+    def fetch_key_ns(table: Table, namespace: str, key: str) -> GenericQuery["APIKeyModel"]:
+        return APIKeyModel.fetch_path_ns(table, namespace, [key])
 
     @staticmethod
-    def fetch_path(table: Table, namespace: str, path: list[str]) -> GenericQuery["APIKeyModel"]:
+    def fetch_path_ns(table: Table, namespace: str, path: list[str]) -> GenericQuery["APIKeyModel"]:
         selector: FromClause = table.c.kvs
 
         for p in path:
             selector = table.c.kvs[p]
         return select(selector).where(table.c.apikey_id == namespace)
+
+    @staticmethod
+    def fetch_by_hash(table: Table, pw_hash: str) -> GenericQuery["APIKeyModel"]:
+        json_part = func.json_each(table.c["kvs"]).table_valued('value', joins_implicitly=True)
+        query: Query = select(APIKeyModel).where(json_part.c.value == pw_hash)
+        return query
 
 
 @dataclass
