@@ -17,7 +17,7 @@ ws: Blueprint = Blueprint("ws", __name__)
 
 
 @ws.websocket("/ws/comments")
-@apikey_required(scopes=[Scopes.ACCOUNT_READ])
+@apikey_required(scopes=[Scopes.WS_READ])
 async def comment_socket():
     user: UserModel = g.get("user")
     channel_id: int = int(websocket.args["channelId"])

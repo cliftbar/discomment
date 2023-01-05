@@ -22,6 +22,7 @@ class Scopes(str, Enum):
     ADMIN = "admin"
     ACCOUNT_READ = "account_read"
     ACCOUNT_WRITE = "account_write"
+    WS_READ = "ws_read"
 
 
 def verify_scopes(user_scopes: list[str], allowed_scopes: list[Scopes]) -> bool:

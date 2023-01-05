@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table
+from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table, BOOLEAN
 from sqlalchemy.future import select
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import FromClause
@@ -20,6 +20,7 @@ class UserModel(BaseWithMigrations):
     created_at: datetime = Column(DATETIME, nullable=False, server_default=func.now())
 
     kvs: dict = Column(JSON, nullable=False)
+    deleted: bool = Column(BOOLEAN, nullable=False, server_default="0")
 
     @property
     def user_data(self):
@@ -32,7 +33,7 @@ class UserModel(BaseWithMigrations):
             create_hash("localhost", apikey=True),
             ["localhost", "127.0.0.1"],
             moderation=account_conf.moderation_enabled,
-            scopes=[Scopes.ADMIN, Scopes.ACCOUNT_READ, Scopes.ACCOUNT_WRITE],
+            scopes=[Scopes.ADMIN, Scopes.ACCOUNT_READ, Scopes.ACCOUNT_WRITE, Scopes.WS_READ],
             history_limit=account_conf.history_limit,
             websocket_sleep_s=account_conf.websocket_sleep_s,
             linear_moderation_threshold=account_conf.linear_moderation_threshold,
