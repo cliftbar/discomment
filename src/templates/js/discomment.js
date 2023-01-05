@@ -43,6 +43,9 @@ function postComment() {
         }
     }).then(res => {
         console.log(res)
+        if (res.status === 420) {
+            alert("You've been auto-moderated! Clean up the message and try again, and sorry for any false positives.")
+        }
     })
 }
 
