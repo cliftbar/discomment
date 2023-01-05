@@ -25,11 +25,18 @@ function send(event) {
 
 function postComment() {
     let msg = document.getElementById("inpt_message").value
+    let author = document.getElementById("inpt_author").value
     let url = "http://" + host + ":" + port + "/api/msg"
+
+    let body = {"message": msg, "channelId": channelId}
+
+    if (author !== "") {
+        body["author"] = author
+    }
 
     fetch(url, {
         method: "POST",
-        body: JSON.stringify({"message": msg, "channelId": channelId}),
+        body: JSON.stringify(body),
         headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + apikey

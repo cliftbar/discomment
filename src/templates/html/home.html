@@ -10,7 +10,9 @@
 <body onload="getComments()">
 <script src="js/discomment.js"></script>
 <form action="javascript:void(0);">
-    <label for="message">Chat Message</label>
+    <label for="inpt_author">Name (Optional)</label>
+    <input type="text" id="inpt_author"/>
+    <label for="inpt_message">Chat Message</label>
     <input type="text" id="inpt_message" minlength="1"/>
     <button onclick="postComment(event)">Send</button>
 </form>

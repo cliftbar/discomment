@@ -25,12 +25,13 @@ async def send_msg() -> JSON:
     json_data: dict = await request.get_json()
     msg: str = json_data['message']
     channel_id: int = int(json_data["channelId"])
+    author: str = json_data.get("author", uuid.uuid4())
 
     if user.user_data.moderation:
         if validate_msg(msg):
             raise ModerationApplied()
 
-    msg = f"Author: {uuid.uuid4()}\n{msg}"
+    msg = f"Author: {author}\n{msg}"
     ret: Message = await discord_client.get_channel(channel_id).send(msg)
     return DiscommentClient.msg_to_json(ret)
 
