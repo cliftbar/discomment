@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -12,6 +12,8 @@ class DCServerConfig:
 
     host: str = "127.0.0.1"
     port: int = 5000
+    cors_allowed_origin: str = "*"
+    trusted_proxies: list[str] = field(default_factory=lambda: ["127.0.0.1"])
     log_level: str = "debug"
     msg_queue_max: int = 1000
     msg_queue_fetch_limit: int = 100

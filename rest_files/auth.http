@@ -5,10 +5,10 @@ Authorization: Bearer {{apikey}}
 Content-Type: application/json
 
 {
-  "namespace": "test",
+  "namespace": "pixel",
   "moderation": true,
   "allowedHosts": [
-    "*"
+    "pixel.cliftbar.site"
   ],
   "scopes": ["admin", "account_read", "account_write"]
 }

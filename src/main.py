@@ -28,8 +28,8 @@ from discord_utils import discord_client
 
 
 app: Quart = Quart("Discomment", template_folder="templates", static_url_path="/", static_folder="static")
-app = cors(app)
-app.asgi_app = ProxyHeadersMiddleware(app.asgi_app, trusted_hosts=["127.0.0.1"])
+app = cors(app, allow_origin=server_conf.cors_allowed_origin)
+app.asgi_app = ProxyHeadersMiddleware(app.asgi_app, trusted_hosts=server_conf.trusted_proxies)
 rate_limiter: RateLimiter = RateLimiter(app)
 
 
