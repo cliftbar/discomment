@@ -1,4 +1,5 @@
 # https://stackoverflow.com/questions/71260887/how-to-use-api-key-authentication-with-quart-api
+import logging
 from functools import wraps
 from typing import Callable, Any
 
@@ -8,6 +9,7 @@ from werkzeug.exceptions import Unauthorized, Forbidden
 
 from auth import auth_store, UserModel
 from auth.authutils import create_hash, verify_hash, verify_hosts, verify_scopes, Scopes
+from basic_log import log
 from sqlite import GenericQuery
 
 
@@ -59,6 +61,8 @@ def apikey_required(scopes: list[Scopes] = None) -> Callable:
                 raise Unauthorized("API Key not recognized")
 
             g.user = record
+
+            log(str(ctx.headers), logging.DEBUG)
 
             if not verify_hash(api_key, record.user_data.hash):
                 raise Forbidden("API Key not verified")
