@@ -1,4 +1,5 @@
 from enum import Enum
+import socket
 
 from passlib.handlers.argon2 import argon2
 
@@ -14,8 +15,9 @@ def verify_hash(secret: str, pw_hash: str) -> bool:
     return argon2.verify(secret, pw_hash)
 
 
-def verify_hosts(remote_host: str, host_list: list[str]) -> bool:
-    return "*" in host_list or remote_host in host_list
+def verify_hosts(remote_ip: str, host_list: list[str]) -> bool:
+    ip_list: list[str] = [socket.gethostbyname(host) for host in host_list]
+    return "*" in host_list or remote_ip in host_list
 
 
 class Scopes(str, Enum):
