@@ -1,8 +1,10 @@
+import logging
 from enum import Enum
 import socket
 
 from passlib.handlers.argon2 import argon2
 
+from basic_log import log
 from config import server_conf
 
 
@@ -17,7 +19,9 @@ def verify_hash(secret: str, pw_hash: str) -> bool:
 
 def verify_hosts(remote_ip: str, host_list: list[str]) -> bool:
     ip_list: list[str] = [socket.gethostbyname(host) for host in host_list]
-    return "*" in host_list or remote_ip in host_list
+    log(f"hosts: {host_list}", logging.DEBUG)
+    log(f"ips: {ip_list}", logging.DEBUG)
+    return "*" in host_list or remote_ip in ip_list
 
 
 class Scopes(str, Enum):
