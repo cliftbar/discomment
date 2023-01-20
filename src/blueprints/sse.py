@@ -10,6 +10,7 @@ from quart import Blueprint, abort, make_response, request, g
 from auth import UserModel
 from auth.authutils import Scopes
 from basic_log import log
+from config import account_conf
 from decorators import apikey_required
 from discord_utils import DiscommentClient
 from msg_queue import channel_msg_manager
@@ -45,21 +46,21 @@ async def sse_comments():
     user: UserModel = g.get("user")
     channel_id: int = int(request.args["channelId"])
 
-    sleep_time: int = user.user_data.websocket_sleep_s
+    sleep_time: int = user.user_data.websocket_sleep_s or account_conf.websocket_sleep_s
 
     async def send_events():
         msgs: list = channel_msg_manager.pop(channel_id=channel_id)
         last_msg: Optional[Message] = msgs[-1] if 0 < len(msgs) else None
 
         while True:
-            log("sse alive", logging.DEBUG, __name__)
+            log(f"sse alive, {sleep_time}s sleep", logging.DEBUG, __name__)
             await sleep(sleep_time)
             last_msg = msgs[-1] if 0 < len(msgs) else last_msg
             log(last_msg.content if last_msg is not None else "None", logging.DEBUG, __name__)
             msgs = channel_msg_manager.pop(channel_id=channel_id, as_of=last_msg)
-
-            event = ServerSentEvent(json.dumps([DiscommentClient.msg_to_json(m) for m in msgs]), retry=3)
-            yield event.encode()
+            if 0 < len(msgs):
+                event = ServerSentEvent(json.dumps([DiscommentClient.msg_to_json(m) for m in msgs]), retry=3)
+                yield event.encode()
 
     response = await make_response(
         send_events(),
