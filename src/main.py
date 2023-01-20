@@ -9,6 +9,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from basic_log import log
 from blueprints.api import api
 from blueprints.jinja import jinja
+from blueprints.sse import sse
 from blueprints.websockets import ws
 from config import server_conf
 from discord_utils import discord_client
@@ -42,6 +43,7 @@ async def before_serving():
 
 app.register_blueprint(api)
 app.register_blueprint(ws)
+app.register_blueprint(sse)
 if server_conf.static_routes_enabled:
     app.register_blueprint(jinja)
 
