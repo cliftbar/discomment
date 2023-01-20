@@ -45,13 +45,15 @@ async def sse_comments():
     user: UserModel = g.get("user")
     channel_id: int = int(request.args["channelId"])
 
+    sleep_time: int = user.user_data.websocket_sleep_s
+
     async def send_events():
         msgs: list = channel_msg_manager.pop(channel_id=channel_id)
         last_msg: Optional[Message] = msgs[-1] if 0 < len(msgs) else None
 
         while True:
             log("sse alive", logging.DEBUG, __name__)
-            await sleep(user.user_data.websocket_sleep_s)
+            await sleep(sleep_time)
             last_msg = msgs[-1] if 0 < len(msgs) else last_msg
             log(last_msg.content if last_msg is not None else "None", logging.DEBUG, __name__)
             msgs = channel_msg_manager.pop(channel_id=channel_id, as_of=last_msg)
