@@ -10,7 +10,7 @@ Content-Type: application/json
   "allowedHosts": [
     "pixel.cliftbar.site"
   ],
-  "scopes": ["admin", "account_read", "account_write"]
+  "scopes": ["admin", "account_read", "account_write", "ws_read"]
 }
 
 ###

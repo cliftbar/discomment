@@ -1,9 +1,9 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Any, Sequence, Optional
 
-from sqlalchemy import create_engine, Table
+from sqlalchemy import create_engine, Table, Row, RowMapping, Executable
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.future import select
 from sqlalchemy.orm import declarative_base, Session, Query
@@ -47,7 +47,7 @@ class SqliteStore:
         self.metadata.create_all(self.engine)
         self.tables: dict[str, Table] = {}
 
-        session: Session = Session(self.engine)
+        session: Session = Session(self.engine, expire_on_commit=False)
         with session.begin() as tx:
             for model in models:
                 for migration in model.migrations():
@@ -73,16 +73,22 @@ class SqliteStore:
         return self.store_rows([row])
 
     def store_rows(self, rows: list[Base]):
-        session: Session = Session(self.engine)
+        session: Session = Session(self.engine, expire_on_commit=False)
         with session.begin():
             session.add_all(rows)
 
-    def fetch_entities(self, stmt: GenericQuery[M]) -> list[M]:
-        res: list[M] = Session(self.engine).execute(statement=stmt).scalars().all()
+    def fetch_entities(self, stmt: Executable) -> Sequence[Row | RowMapping | Any]:
+        session: Session = Session(self.engine, expire_on_commit=False)
+        with session.begin():
+            res: Sequence[Row | RowMapping | Any] = session.execute(statement=stmt).scalars().all()
+
         return res
 
-    def fetch_first_entity(self, stmt: GenericQuery[M]) -> M:
-        res: M = Session(self.engine).execute(statement=stmt).scalars().first()
+    def fetch_first_entity(self, stmt: Executable) -> Optional[M]:
+        session: Session = Session(self.engine, expire_on_commit=False)
+        with session.begin():
+            res: Optional[M] = session.execute(statement=stmt).scalars().first()
+
         return res
 
     def get_table(self, tablename: str) -> Table:

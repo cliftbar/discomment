@@ -1,19 +1,26 @@
 import dataclasses
+import logging
 import uuid
 from datetime import datetime
 
 from discord import Message
 from quart import Blueprint, request, g
+from sqlalchemy import Table
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.attributes import flag_modified
+from werkzeug.exceptions import Conflict, NotFound
 
 from auth import auth_store, UserModel
 from auth.authutils import verify_hash, create_hash, Scopes
-from auth.user import UserData
+from auth.user import APIKeyData
+from basic_log import log
 from config import account_conf
 from dctypes import JSON
 from decorators import apikey_required
 from discord_utils import discord_client, DiscommentClient
 from discord_utils.moderation import validate_msg
 from http_exceptions import ModerationApplied
+from sqlite import GenericQuery
 
 api: Blueprint = Blueprint("api", __name__)
 
@@ -22,12 +29,13 @@ api: Blueprint = Blueprint("api", __name__)
 @apikey_required(scopes=[Scopes.ACCOUNT_WRITE])
 async def send_msg() -> JSON:
     user: UserModel = g.get("user")
+    apikey_hash: str = g.get("api_key_hash")
     json_data: dict = await request.get_json()
     msg: str = json_data['message']
     channel_id: int = int(json_data["channelId"])
     author: str = json_data.get("author", uuid.uuid4())
 
-    if user.user_data.moderation:
+    if user.apikey_data_by_hash(apikey_hash).moderation:
         if validate_msg(msg):
             raise ModerationApplied()
 
@@ -44,15 +52,15 @@ async def get_messages() -> JSON:
     as_of: datetime = None if as_of_str is None else datetime.fromisoformat(as_of_str)
 
     user: UserModel = g.get("user")
+    apikey_hash: str = g.get("api_key_hash")
 
-    history_limit: int = (user.user_data.history_limit
-                          if user.user_data.history_limit is not None
+    history_limit: int = (user.apikey_data_by_hash(apikey_hash).history_limit
+                          if user.apikey_data_by_hash(apikey_hash).history_limit is not None
                           else account_conf.history_limit)
 
     msgs: list = [message
                   async for message
-                  in discord_client.get_channel(channel_id)
-                  .history(limit=history_limit, before=as_of)]
+                  in discord_client.get_channel(channel_id).history(limit=history_limit, before=as_of)]
 
     contents: JSON = [DiscommentClient.msg_to_json(m) for m in msgs]
     return contents
@@ -62,18 +70,39 @@ async def get_messages() -> JSON:
 @apikey_required(scopes=[Scopes.ACCOUNT_READ])
 async def verify_apikey() -> JSON:
     user: UserModel = g.get("user")
+    apikey_hash: str = g.get("api_key_hash")
 
     apikey: str = request.headers.get("Authorization").split(" ")[1]
 
-    return {"result": verify_hash(apikey, user.user_data.hash), "scopes": user.user_data.scopes}
+    return {"result": verify_hash(apikey, user.apikey_data_by_hash(apikey_hash).hash),
+            "scopes": user.apikey_data_by_hash(apikey_hash).scopes}
 
 
-@api.route("/api/auth/apikey/create", methods=["POST"])
+@api.route("/api/auth/namespace", methods=["POST"])
+@apikey_required(scopes=[Scopes.ADMIN])
+async def create_namespace() -> JSON:
+    js: JSON = await request.get_json()
+
+    namespace: str = js["namespace"]
+
+    entry: UserModel = UserModel(namespace=namespace, kvs={})
+
+    try:
+        auth_store.store_row(entry)
+    except IntegrityError as ie:
+        log(str(ie), logging.DEBUG)
+        raise Conflict(f"namespace {namespace} already exists")
+
+    return {"namespace": namespace}
+
+
+@api.route("/api/auth/apikey", methods=["POST"])
 @apikey_required(scopes=[Scopes.ADMIN])
 async def create_apikey() -> JSON:
     js: JSON = await request.get_json()
 
     namespace: str = js["namespace"]
+    apikey_identifier: str = js["identifier"]
     allowed_hosts: list[str] = js.get("allowedHosts", ["*"])
     moderation: bool = js.get("moderation", account_conf.moderation_enabled)
     scopes: list[Scopes] = [Scopes(s)
@@ -87,13 +116,23 @@ async def create_apikey() -> JSON:
     new_apikey: str = f"dsc.{uuid.uuid4()}"
     hashed_apikey: str = create_hash(new_apikey, apikey=True)
 
-    data: UserData = UserData(hash=hashed_apikey, allowed_hosts=allowed_hosts, moderation=moderation, scopes=scopes,
-                              max_msg_length=max_msg_length, moderation_enabled=moderation,
-                              linear_moderation_threshold=linear_moderation_threshold,
-                              websocket_sleep_s=websocket_sleep_s)
+    data: APIKeyData = APIKeyData(identifier=apikey_identifier, hash=hashed_apikey, allowed_hosts=allowed_hosts,
+                                  moderation=moderation, scopes=scopes, max_msg_length=max_msg_length,
+                                  moderation_enabled=moderation,
+                                  linear_moderation_threshold=linear_moderation_threshold,
+                                  websocket_sleep_s=websocket_sleep_s)
 
-    entry: UserModel = UserModel(apikey_id=namespace, kvs=dataclasses.asdict(data))
+    query_existing: GenericQuery = UserModel.fetch_ns(namespace)
+    existing_model: UserModel = auth_store.fetch_first_entity(query_existing)
+    if existing_model is None:
+        raise NotFound()
 
-    auth_store.store_row(entry)
+    if hashed_apikey in existing_model.kvs:
+        raise Conflict(f"API Key {namespace} already exists")
+
+    existing_model.kvs[hashed_apikey] = dataclasses.asdict(data)
+    flag_modified(existing_model, "kvs")
+
+    auth_store.store_row(existing_model)
 
     return {"apikey": new_apikey}
