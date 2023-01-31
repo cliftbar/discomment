@@ -2,9 +2,23 @@ const host = "{{ host }}"
 const port = "{{ port }}"
 const apikey = "{{ apikey }}"
 const channelId = "{{ channelId }}"
-const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=" + apikey + "&channelId=" + channelId.toString());
+const baseUrl = host + ":" + port
+// const ws = new WebSocket("ws://" + host + ":" + port + "/ws/comments?auth=" + apikey + "&channelId=" + channelId.toString());
+//
+// ws.addEventListener("message", function (event) {
+//     let d = JSON.parse(event.data);
+//     for (let i = 0; i < d.length; i++) {
+//         let m = d[i]
+//         const li = document.createElement("li");
+//         li.appendChild(document.createTextNode(JSON.stringify(m)));
+//         document.getElementById("ul_messages").prepend(li);
+//     }
+// });
 
-ws.addEventListener("message", function (event) {
+let source = new EventSource("http://" + baseUrl + "/sse/comments?auth=" + apikey + "&channelId=" + channelId.toString());
+source.onmessage = function(event) {
+    console.log('Incoming data:' + event.data);
+
     let d = JSON.parse(event.data);
     for (let i = 0; i < d.length; i++) {
         let m = d[i]
@@ -12,7 +26,7 @@ ws.addEventListener("message", function (event) {
         li.appendChild(document.createTextNode(JSON.stringify(m)));
         document.getElementById("ul_messages").prepend(li);
     }
-});
+};
 
 function send(event) {
     const message = (new FormData(event.target)).get("inpt_message");
