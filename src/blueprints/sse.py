@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 from discord import Message
-from quart import Blueprint, abort, make_response, request, g
+from quart import Blueprint, make_response, request, g
+from werkzeug.exceptions import BadRequest
 
 from auth import UserModel
 from auth.authutils import Scopes
@@ -41,12 +42,14 @@ class ServerSentEvent:
 @apikey_required(scopes=[Scopes.ACCOUNT_READ])
 async def sse_comments():
     if "text/event-stream" not in request.accept_mimetypes:
-        abort(400)
+        raise BadRequest(f"Request must be of mimetype text/event-stream")
 
     user: UserModel = g.get("user")
+    apikey_hash: str = g.get("api_key_hash")
+
     channel_id: int = int(request.args["channelId"])
 
-    sleep_time: int = user.user_data.websocket_sleep_s or account_conf.websocket_sleep_s
+    sleep_time: float = user.apikey_data_by_hash(apikey_hash).websocket_sleep_s or account_conf.websocket_sleep_s
 
     async def send_events():
         msgs: list = channel_msg_manager.pop(channel_id=channel_id)

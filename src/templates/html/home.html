@@ -9,6 +9,21 @@
 </head>
 <body onload="getComments()">
 <script src="js/discomment.js"></script>
+<div id="cntr_signUp">
+    <h1>API Sign Up</h1>
+    <form action="javascript:void(0);">
+        <label for="tbx_namespace">Namespace:</label><input type="text" id="tbx_namespace"/>
+        <button onclick="postCreateNamespace(event)">Create Account</button>
+    </form>
+        <label for="tbx_apiKeyId">API Key Name:</label><input type="text" id="tbx_apiKeyId"/>
+        <label for="tbx_allowedDomains">Allowed Domains (comma separated):</label><input type="text" id="tbx_allowedDomains"/>
+        <label for="chbx_allowAllDomains">Allow all domains:</label><input type="checkbox" id="chbx_allowAllDomains" />
+        <label for="chbx_doModeration">Moderate Messages:</label><input type="checkbox" id="chbx_doModeration" />
+        <button onclick="postCreateApiKey(event)">Create APIKey</button>
+    </form>
+    <button type="button" onclick="window.location.href='https://discord.com/api/oauth2/authorize?client_id=1057790789230530570&permissions=326417640528&scope=bot'">Add to Discord</button>
+</div>
+
 <form action="javascript:void(0);">
     <label for="inpt_author">Name (Optional)</label>
     <input type="text" id="inpt_author"/>

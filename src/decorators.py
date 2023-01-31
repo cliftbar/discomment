@@ -9,6 +9,7 @@ from werkzeug.exceptions import Unauthorized, Forbidden
 
 from auth import auth_store, UserModel
 from auth.authutils import create_hash, verify_hash, verify_hosts, verify_scopes, Scopes
+from auth.user import APIKeyData
 from basic_log import log
 from sqlite import GenericQuery
 
@@ -61,14 +62,17 @@ def apikey_required(scopes: list[Scopes] = None) -> Callable:
                 raise Unauthorized("API Key not recognized")
 
             g.user = record
+            g.api_key_hash = hashed
 
             log(str(ctx.headers), logging.DEBUG)
 
-            if not verify_hash(api_key, record.user_data.hash):
+            api_key_data: APIKeyData = record.apikey_data_by_hash(hashed)
+
+            if not verify_hash(api_key, api_key_data.hash):
                 raise Forbidden("API Key not verified")
-            if not verify_hosts(ctx.remote_addr, record.user_data.allowed_hosts):
+            if not verify_hosts(ctx.remote_addr, api_key_data.allowed_hosts):
                 raise Forbidden("Client Host not allowed")
-            if not verify_scopes(record.user_data.scopes, scopes):
+            if not verify_scopes(api_key_data.scopes, scopes):
                 raise Forbidden("API Key has insufficient permissions")
 
             return await current_app.ensure_async(func)(*args, **kwargs)

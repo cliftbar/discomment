@@ -81,3 +81,63 @@ function getComments() {
         }
     })
 }
+
+function postCreateNamespace() {
+    let namespace = document.getElementById("tbx_namespace").value
+
+    let url = "http://" + host + ":" + port + "/api/auth/namespace"
+
+    let body = {
+        "namespace": namespace,
+    }
+
+    fetch(url, {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apikey
+        }
+    }).then(r => {
+        if (r.ok) {
+            let data = r.json
+            alert('Namespace "' + data["namespace"] + '" created.')
+        } else if (r.status === 409) {
+            alert("Namespace " + namespace + " already exists!")
+        }
+    })
+}
+
+function postCreateApiKey() {
+    let namespace = document.getElementById("tbx_namespace").value
+    let apiKeyId = document.getElementById("tbx_apiKeyId").value
+    let allowedDomains = document.getElementById("tbx_allowedDomains").value.split(",")
+    let allDomains = document.getElementById("chbx_allowAllDomains").value
+    let doModeration = document.getElementById("chbx_doModeration").value
+
+    let url = "http://" + host + ":" + port + "/api/auth/apikey"
+
+    let body = {
+        "namespace": namespace,
+        "identifier": apiKeyId,
+        "moderation": doModeration,
+        "scopes": ["admin", "account_read", "account_write", "ws_read"]
+    }
+
+    if (allDomains === true) {
+        body["allowedHosts"] = ["*"]
+    } else {
+        body["allowedHosts"] = allowedDomains
+    }
+
+    fetch(url, {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apikey
+        }
+    }).then(r => r.json()).then(data => {
+        alert('Here is your API Key: "' + data["apikey"] + '"\nIt will only be displayed this one time.')
+    })
+}
