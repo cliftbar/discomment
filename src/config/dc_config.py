@@ -10,6 +10,7 @@ class DCServerConfig:
     apikey_salt: str
     static_route_apikey: str
 
+    protocol: str = "http"
     host: str = "127.0.0.1"
     port: int = 5000
     cors_allowed_origin: str = "*"

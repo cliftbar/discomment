@@ -11,10 +11,12 @@
 <script src="js/discomment.js"></script>
 <div id="cntr_signUp">
     <h1>API Sign Up</h1>
+    <label for="tbx_apikey">Admin API Key:</label><input type="text" id="tbx_apikey"/>
     <form action="javascript:void(0);">
         <label for="tbx_namespace">Namespace:</label><input type="text" id="tbx_namespace"/>
         <button onclick="postCreateNamespace(event)">Create Account</button>
     </form>
+    <form>
         <label for="tbx_apiKeyId">API Key Name:</label><input type="text" id="tbx_apiKeyId"/>
         <label for="tbx_allowedDomains">Allowed Domains (comma separated):</label><input type="text" id="tbx_allowedDomains"/>
         <label for="chbx_allowAllDomains">Allow all domains:</label><input type="checkbox" id="chbx_allowAllDomains" />
@@ -23,12 +25,15 @@
     </form>
     <button type="button" onclick="window.location.href='https://discord.com/api/oauth2/authorize?client_id=1057790789230530570&permissions=326417640528&scope=bot'">Add to Discord</button>
 </div>
-
+<br />
+<h1>Test Area</h1>
+<div>
+    <label for="inpt_testApiKey">API Key</label> <input type="text" id="inpt_testApiKey"/>
+    <label for="inpt_testChannelId">Channel ID</label><input type="text" id="inpt_testChannelId"/>
+</div>
 <form action="javascript:void(0);">
-    <label for="inpt_author">Name (Optional)</label>
-    <input type="text" id="inpt_author"/>
-    <label for="inpt_message">Chat Message</label>
-    <input type="text" id="inpt_message" minlength="1"/>
+    <label for="inpt_author">Name (Optional)</label> <input type="text" id="inpt_author"/>
+    <label for="inpt_message">Chat Message</label><input type="text" id="inpt_message"/>
     <button onclick="postComment(event)">Send</button>
 </form>
 

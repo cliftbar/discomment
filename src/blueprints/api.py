@@ -5,9 +5,7 @@ from datetime import datetime
 
 from discord import Message
 from quart import Blueprint, request, g
-from sqlalchemy import Table
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.exceptions import Conflict, NotFound
 
 from auth import auth_store, UserModel
@@ -35,7 +33,7 @@ async def send_msg() -> JSON:
     channel_id: int = int(json_data["channelId"])
     author: str = json_data.get("author", uuid.uuid4())
 
-    if user.apikey_data_by_hash(apikey_hash).moderation:
+    if user.apikey_data_by_hash(apikey_hash).moderation_enabled:
         if validate_msg(msg):
             raise ModerationApplied()
 
@@ -79,13 +77,18 @@ async def verify_apikey() -> JSON:
 
 
 @api.route("/api/auth/namespace", methods=["POST"])
-@apikey_required(scopes=[Scopes.ADMIN])
 async def create_namespace() -> JSON:
     js: JSON = await request.get_json()
 
     namespace: str = js["namespace"]
 
-    entry: UserModel = UserModel(namespace=namespace, kvs={})
+    new_apikey: str = f"dsc.{uuid.uuid4()}"
+    hashed_apikey: str = create_hash(new_apikey, apikey=True)
+
+    api_key_data: APIKeyData = APIKeyData(identifier="admin", hash=hashed_apikey, allowed_hosts=["*"],
+                                        scopes=[Scopes.ADMIN])
+
+    entry: UserModel = UserModel(namespace=namespace, kvs=dataclasses.asdict(api_key_data))
 
     try:
         auth_store.store_row(entry)
@@ -93,7 +96,7 @@ async def create_namespace() -> JSON:
         log(str(ie), logging.DEBUG)
         raise Conflict(f"namespace {namespace} already exists")
 
-    return {"namespace": namespace}
+    return {"namespace": namespace, "adminApiKey": hashed_apikey}
 
 
 @api.route("/api/auth/apikey", methods=["POST"])
@@ -117,8 +120,7 @@ async def create_apikey() -> JSON:
     hashed_apikey: str = create_hash(new_apikey, apikey=True)
 
     data: APIKeyData = APIKeyData(identifier=apikey_identifier, hash=hashed_apikey, allowed_hosts=allowed_hosts,
-                                  moderation=moderation, scopes=scopes, max_msg_length=max_msg_length,
-                                  moderation_enabled=moderation,
+                                  scopes=scopes, max_msg_length=max_msg_length, moderation_enabled=moderation,
                                   linear_moderation_threshold=linear_moderation_threshold,
                                   websocket_sleep_s=websocket_sleep_s)
 
@@ -131,7 +133,6 @@ async def create_apikey() -> JSON:
         raise Conflict(f"API Key {namespace} already exists")
 
     existing_model.kvs[hashed_apikey] = dataclasses.asdict(data)
-    flag_modified(existing_model, "kvs")
 
     auth_store.store_row(existing_model)
 

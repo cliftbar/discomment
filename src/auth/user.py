@@ -6,7 +6,6 @@ from typing import Optional
 
 from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table, BOOLEAN, Select, text
 from sqlalchemy.future import select
-from sqlalchemy.orm import Query
 from sqlalchemy.sql import FromClause
 
 from auth.authutils import create_hash, Scopes
@@ -19,7 +18,6 @@ class APIKeyData:
     identifier: str
     hash: str
     allowed_hosts: list[str]
-    moderation: bool = False
     scopes: list[Scopes] = field(default_factory=list)
 
     history_limit: int = account_conf.history_limit
@@ -61,7 +59,6 @@ class UserModel(BaseWithMigrations):
             identifier="basic",
             hash=create_hash("localhost", apikey=True),
             allowed_hosts=["localhost", "127.0.0.1"],
-            moderation=account_conf.moderation_enabled,
             scopes=[Scopes.ADMIN, Scopes.ACCOUNT_READ, Scopes.ACCOUNT_WRITE, Scopes.WS_READ],
             history_limit=account_conf.history_limit,
             websocket_sleep_s=account_conf.websocket_sleep_s,

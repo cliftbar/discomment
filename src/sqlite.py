@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, Table, Row, RowMapping, Executable
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.future import select
 from sqlalchemy.orm import declarative_base, Session, Query
+from sqlalchemy.orm.attributes import flag_dirty
 
 from basic_log import log
 
@@ -70,9 +71,12 @@ class SqliteStore:
                 raise ie
 
     def store_row(self, row: Base):
+        flag_dirty(row)
         return self.store_rows([row])
 
     def store_rows(self, rows: list[Base]):
+        for r in rows:
+            flag_dirty(r)
         session: Session = Session(self.engine, expire_on_commit=False)
         with session.begin():
             session.add_all(rows)
