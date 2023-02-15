@@ -26,39 +26,43 @@ api: Blueprint = Blueprint("api", __name__)
 @api.route("/api/msg", methods=["POST"])
 @apikey_required(scopes=[Scopes.ACCOUNT_WRITE])
 async def send_msg() -> JSON:
-    user: UserModel = g.get("user")
-    apikey_hash: str = g.get("api_key_hash")
     json_data: dict = await request.get_json()
     msg: str = json_data['message']
-    channel_id: int = int(json_data["channelId"])
     author: str = json_data.get("author", uuid.uuid4())
 
-    if user.apikey_data_by_hash(apikey_hash).moderation_enabled:
+    user: UserModel = g.get("user")
+    apikey_hash: str = g.get("api_key_hash")
+    api_key_data = user.apikey_data_by_hash(apikey_hash)
+
+    if api_key_data.moderation_enabled:
         if validate_msg(msg):
             raise ModerationApplied()
 
     msg = f"Author: {author}\n{msg}"
-    ret: Message = await discord_client.get_channel(channel_id).send(msg)
+    ret: Message = await discord_client.get_channel(api_key_data.channel_id).send(msg)
     return DiscommentClient.msg_to_json(ret)
 
 
 @api.route("/api/msg")
 @apikey_required(scopes=[Scopes.ACCOUNT_READ])
 async def get_messages() -> JSON:
-    channel_id: int = int(request.args["channelId"])
     as_of_str: str = request.args.get("asOf")
     as_of: datetime = None if as_of_str is None else datetime.fromisoformat(as_of_str)
 
     user: UserModel = g.get("user")
     apikey_hash: str = g.get("api_key_hash")
+    api_key_data: APIKeyData = user.apikey_data_by_hash(apikey_hash)
 
-    history_limit: int = (user.apikey_data_by_hash(apikey_hash).history_limit
-                          if user.apikey_data_by_hash(apikey_hash).history_limit is not None
+    if api_key_data is None:
+        raise NotFound(g.get("api_key"))
+
+    history_limit: int = (api_key_data.history_limit
+                          if api_key_data.history_limit is not None
                           else account_conf.history_limit)
 
     msgs: list = [message
                   async for message
-                  in discord_client.get_channel(channel_id).history(limit=history_limit, before=as_of)]
+                  in discord_client.get_channel(api_key_data.channel_id).history(limit=history_limit, before=as_of)]
 
     contents: JSON = [DiscommentClient.msg_to_json(m) for m in msgs]
     return contents
@@ -86,9 +90,9 @@ async def create_namespace() -> JSON:
     hashed_apikey: str = create_hash(new_apikey, apikey=True)
 
     api_key_data: APIKeyData = APIKeyData(identifier="admin", hash=hashed_apikey, allowed_hosts=["*"],
-                                        scopes=[Scopes.ADMIN])
+                                          scopes=[Scopes.ADMIN])
 
-    entry: UserModel = UserModel(namespace=namespace, kvs=dataclasses.asdict(api_key_data))
+    entry: UserModel = UserModel(namespace=namespace, kvs={api_key_data.hash: dataclasses.asdict(api_key_data)})
 
     try:
         auth_store.store_row(entry)
@@ -96,7 +100,7 @@ async def create_namespace() -> JSON:
         log(str(ie), logging.DEBUG)
         raise Conflict(f"namespace {namespace} already exists")
 
-    return {"namespace": namespace, "adminApiKey": hashed_apikey}
+    return {"namespace": namespace, "adminApiKey": new_apikey}
 
 
 @api.route("/api/auth/apikey", methods=["POST"])
@@ -106,6 +110,7 @@ async def create_apikey() -> JSON:
 
     namespace: str = js["namespace"]
     apikey_identifier: str = js["identifier"]
+    channel_id: int = int(js["channelId"])
     allowed_hosts: list[str] = js.get("allowedHosts", ["*"])
     moderation: bool = js.get("moderation", account_conf.moderation_enabled)
     scopes: list[Scopes] = [Scopes(s)
@@ -119,8 +124,9 @@ async def create_apikey() -> JSON:
     new_apikey: str = f"dsc.{uuid.uuid4()}"
     hashed_apikey: str = create_hash(new_apikey, apikey=True)
 
-    data: APIKeyData = APIKeyData(identifier=apikey_identifier, hash=hashed_apikey, allowed_hosts=allowed_hosts,
-                                  scopes=scopes, max_msg_length=max_msg_length, moderation_enabled=moderation,
+    data: APIKeyData = APIKeyData(identifier=apikey_identifier, hash=hashed_apikey, channel_id=channel_id,
+                                  allowed_hosts=allowed_hosts, scopes=scopes, max_msg_length=max_msg_length,
+                                  moderation_enabled=moderation,
                                   linear_moderation_threshold=linear_moderation_threshold,
                                   websocket_sleep_s=websocket_sleep_s)
 

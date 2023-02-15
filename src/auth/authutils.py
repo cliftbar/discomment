@@ -18,10 +18,12 @@ def verify_hash(secret: str, pw_hash: str) -> bool:
 
 
 def verify_hosts(remote_ip: str, host_list: list[str]) -> bool:
+    if "*" in host_list:
+        return True
     ip_list: list[str] = [socket.gethostbyname(host) for host in host_list]
     log(f"hosts: {host_list}", logging.DEBUG)
     log(f"ips: {ip_list}", logging.DEBUG)
-    return "*" in host_list or remote_ip in ip_list
+    return remote_ip in ip_list
 
 
 class Scopes(str, Enum):

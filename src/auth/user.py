@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy import func, DATETIME, TEXT, Column, JSON, Table, BOOLEAN, Select, text
 from sqlalchemy.future import select
 from sqlalchemy.sql import FromClause
+from sqlalchemy_json import mutable_json_type
 
 from auth.authutils import create_hash, Scopes
 from config import account_conf
@@ -17,7 +18,8 @@ from sqlite import BaseWithMigrations, GenericQuery
 class APIKeyData:
     identifier: str
     hash: str
-    allowed_hosts: list[str]
+    channel_id: int = -1
+    allowed_hosts: list[str] = field(default_factory=list)
     scopes: list[Scopes] = field(default_factory=list)
 
     history_limit: int = account_conf.history_limit
@@ -34,23 +36,25 @@ class UserModel(BaseWithMigrations):
     namespace: str = Column(TEXT, primary_key=True, nullable=False)
     created_at: datetime = Column(DATETIME, nullable=False, server_default=func.now())
 
-    kvs: dict = Column(JSON, nullable=False)
+    kvs: dict = Column(mutable_json_type(JSON, nested=True), nullable=False)
     deleted: bool = Column(BOOLEAN, nullable=False, server_default="0")
 
-    def apikey_data_by_hash(self, apikey_id: str) -> Optional[APIKeyData]:
-        if apikey_id not in self.kvs:
-            return None
-        return APIKeyData(**self.kvs[apikey_id])
+    # More expensive than lookup by hash
+    def apikey_data_by_id(self, apikey_id: str) -> Optional[APIKeyData]:
+        vals = [v for v in self.kvs.values() if v["identifier"] == apikey_id]
 
-    # More expensive than lookup by has
-    def apikey_data_by_id(self, apikey_id) -> Optional[APIKeyData]:
-        data = [v for v in self.kvs.values() if v["identifier"] == apikey_id]
-        if len(data) == 0:
+        if len(vals) == 0:
             return None
-        elif 1 < len(data):
+        elif 1 < len(vals):
             raise Exception(f"Too many keys found for id {apikey_id}")
 
-        return APIKeyData(**data[0])
+        return APIKeyData(**vals[0])
+
+    def apikey_data_by_hash(self, apikey_hash) -> Optional[APIKeyData]:
+        for k, v in self.kvs.items():
+            if k == apikey_hash:
+                return APIKeyData(**v)
+        return None
 
     @classmethod
     def migrations(cls) -> list[text]:
@@ -101,6 +105,6 @@ class UserModel(BaseWithMigrations):
 
     @staticmethod
     def fetch_by_hash(table: Table, pw_hash: str) -> Select:
-        json_part = func.json_each(table.c["kvs"]).table_valued("key", joins_implicitly=True)
+        json_part = func.json_each(table.c["kvs"]).table_valued("key", "value", joins_implicitly=True)
         query: Select = select(UserModel).where(json_part.c.key == pw_hash)
         return query

@@ -62,6 +62,7 @@ def apikey_required(scopes: list[Scopes] = None) -> Callable:
                 raise Unauthorized("API Key not recognized")
 
             g.user = record
+            g.api_key = api_key
             g.api_key_hash = hashed
 
             log(str(ctx.headers), logging.DEBUG)

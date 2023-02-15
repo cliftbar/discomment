@@ -34,7 +34,7 @@ class DiscommentClient(Client):
         self.msg_manager.push(msg.channel.id, msg)
 
     async def on_ready(self):
-        log(f"Logged on as {self.user}!", logging.DEBUG)
+        log(f"Logged on as {self.user}!", logging.INFO)
 
     async def on_message(self, message):
         log(f"Message from {message.author}: {message.content}", logging.INFO)
